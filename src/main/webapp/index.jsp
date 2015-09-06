@@ -553,7 +553,7 @@
         </div>
         <div class="panel-heading" style="text-align: center">
             <audio id="player" class="btn-block">
-                <source id="playSrc" src="audio/samle.mp3" type="audio/mpeg"/>
+                <source id="playSrc" src="audio/sample.mp3" type="audio/mpeg"/>
                 Your browser does not support the audio element.
             </audio>
             <div class="buttons">
