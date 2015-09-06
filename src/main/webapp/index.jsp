@@ -80,9 +80,9 @@
 
 
             $(document).ready(function () {
-//                $.get(getServiceUrl() + "init", function () {
+                $.get(getServiceUrl() + "init", function () {
                 fillData(curLanguage);
-//                }, "jsonp");
+                }, "jsonp");
             });
         }
         google.maps.event.addDomListener(window, 'load', initialize);

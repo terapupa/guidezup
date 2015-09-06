@@ -83,11 +83,11 @@
     </bean>
 
     <bean id="serverProperties" class="com.guidezup.server.ServerProperties">
-        <property name="audioLocation" value="c:/Users/VladS/workspace/guidezup_content/audio"/>
-        <!--<property name="audioLocation" value="/home/terapupa/guidezup_content/audio"/>-->
+        <!--<property name="audioLocation" value="c:/Users/VladS/workspace/guidezup_content/audio"/>-->
+        <property name="audioLocation" value="/home/terapupa/guidezup_content/audio"/>
         <property name="relatedWebAudioLocation" value="audio"/>
         <property name="relatedWebClientsLocation" value="clients"/>
-        <property name="securityCheck" value="false"/>
+        <property name="securityCheck" value="true"/>
     </bean>
 
     <bean id="fileUtil" class="com.guidezup.server.FileUtil">

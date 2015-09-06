@@ -81,7 +81,7 @@ public class FileUtil
     public void deletePrevFile(String prevUrl, HttpSession session)
     {
         String webAudioPath = session.getServletContext().getRealPath("/") + sp.getRelatedWebAudioLocation();
-        if (prevUrl != null && !prevUrl.contains("samle.mp3"))
+        if (prevUrl != null && !prevUrl.contains("sample.mp3"))
         {
             try
             {
