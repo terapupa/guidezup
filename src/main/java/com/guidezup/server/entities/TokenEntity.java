@@ -17,7 +17,7 @@ public class TokenEntity implements Serializable
     private String sessionId;
     @Column(nullable=false)
     private long timeStamp;
-    @Column(nullable=false)
+    @Column(nullable=true, columnDefinition = "text")
     private String agent;
     @Column(nullable=false)
     private int token;
