@@ -109,22 +109,31 @@ public class GuideDaoImpl extends HibernateDaoSupport implements GuideDao
     @Transactional(readOnly = true)
     public List<GuideEntity> getPublishGuides(String language)
     {
-        return (List<GuideEntity>) getHibernateTemplate().find
-                ("select guide from GuideEntity guide where guide.published = 'true' and guide.languageView ='" + language + "' order by guide.rating desc");
+        String reguest = "select guide from GuideEntity guide where guide.published = 'true' and guide.languageView ='" +
+                language + "' order by guide.rating desc";
+        if (UNDEFINED.equalsIgnoreCase(language))
+        {
+            reguest = "select guide from GuideEntity guide where guide.published = 'true' order by guide.rating desc";
+        }
+        return (List<GuideEntity>) getHibernateTemplate().find(reguest);
     }
 
     @Transactional(readOnly = true)
     public List<GuideEntity> getPaidGuides(String language)
     {
-        return (List<GuideEntity>) getHibernateTemplate().find(
-                "select guide from GuideEntity guide where guide.published='true' and guide.languageView='" + language + "' and guide.buyLink!='FREE' order by guide.rating desc");
+        String reguest = "select guide from GuideEntity guide where guide.published='true' and guide.languageView='" +
+                language + "' and guide.buyLink!='FREE' order by guide.rating desc";
+        if (UNDEFINED.equalsIgnoreCase(language))
+        {
+            reguest = "select guide from GuideEntity guide where guide.published='true' and guide.buyLink!='FREE' order by guide.rating desc";
+        }
+        return (List<GuideEntity>) getHibernateTemplate().find(reguest);
     }
 
     @Transactional(readOnly = true)
     public List<GuideEntity> searchPublishGuides(String value, String language)
     {
         log.debug("search value = " + value);
-        System.out.println("search value = " + value);
         if ((value == null) || (value.length() == 0))
         {
             return getPublishGuides(language);
@@ -140,11 +149,7 @@ public class GuideDaoImpl extends HibernateDaoSupport implements GuideDao
         while(st.hasMoreTokens())
         {
             String token = st.nextToken().trim();
-            List<GuideEntity> list = (List<GuideEntity>)getHibernateTemplate().find
-                    ("select guide from GuideEntity guide where guide.languageView ='" + language + "' and " +
-                    "(lower(guide.guideName) like '%" + token.toLowerCase() + "%' or lower(guide.description) like '%" +
-                            token.toLowerCase() + "%' or lower(guide.languageView) like '%" + token.toLowerCase() +
-                            "%' or lower(guide.country) like '%" + token.toLowerCase() + "%')  order by guide.rating desc");
+            List<GuideEntity> list = (List<GuideEntity>)getHibernateTemplate().find(getRequetsStringForSearch(language, token));
             for (GuideEntity ent : list)
             {
                 listArrayInt[index].add(ent.getGuideId());
@@ -164,6 +169,22 @@ public class GuideDaoImpl extends HibernateDaoSupport implements GuideDao
             res.add(entityMap.get(id));
         }
         return res;
+    }
+
+    private String getRequetsStringForSearch(String language, String token)
+    {
+        String reguest = "select guide from GuideEntity guide where guide.languageView ='" + language + "' and " +
+                "(lower(guide.guideName) like '%" + token.toLowerCase() + "%' or lower(guide.description) like '%" +
+                token.toLowerCase() + "%' or lower(guide.languageView) like '%" + token.toLowerCase() +
+                "%' or lower(guide.country) like '%" + token.toLowerCase() + "%')  order by guide.rating desc";
+        if (UNDEFINED.equalsIgnoreCase(language))
+        {
+            reguest = "select guide from GuideEntity guide where " +
+                    "(lower(guide.guideName) like '%" + token.toLowerCase() + "%' or lower(guide.description) like '%" +
+                    token.toLowerCase() + "%' or lower(guide.languageView) like '%" + token.toLowerCase() +
+                    "%' or lower(guide.country) like '%" + token.toLowerCase() + "%')  order by guide.rating desc";
+        }
+        return reguest;
     }
 
 }

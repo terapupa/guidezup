@@ -3,12 +3,7 @@ package com.guidezup.server.entities;
 import java.io.Serializable;
 import java.util.Locale;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -22,13 +17,14 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name="guide")
 @Entity
 @Table(name = "tbl_guide")
+@SequenceGenerator(name="seq", initialValue=1, allocationSize=100)
 public class GuideEntity implements Serializable
 {
 
 	public static final String NOT_DEFINED = "NOT DEFINED";
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy=GenerationType.SEQUENCE, generator="seq")
     @Column(name="GUIDE_ID")
     private Long guideId;
     @Column(name="NAME", nullable=false)

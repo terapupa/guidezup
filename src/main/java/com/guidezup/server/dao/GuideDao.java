@@ -16,6 +16,8 @@ import com.guidezup.server.model.Language;
  */
 public interface GuideDao
 {
+    public static final String UNDEFINED = "undefined";
+
     public Long addGuide(GuideEntity guide);
 
     public GuideEntity getGuide(long id);

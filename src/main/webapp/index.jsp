@@ -15,7 +15,8 @@
     <!--<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAQuDglnklQo2fARuY8FHeu5PDdypvh0is&v=3.exp&signed_in=true&callback=initialize" async defer></script>-->
     <script type="text/javascript" src="http://www.panoramio.com/wapi/wapi.js?v=1"></script>
 
-    <title>GuidezUp! Walk Watch Listen</title>
+    <title>GuidezUp! Walk Watch Listen - Free audio guides. Бесплатные туристические аудиогиды (аудиогайды). Бесплатные
+        аудиогиды. audio, guide, путешествия, путеводитель, travel, podcast, mobile, journey, аудиогид</title>
     <META http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <META name="Description"
           content="Free multi-language travelling audio guides collection. audio, guide, путешествия, путеводитель,
@@ -28,10 +29,12 @@
 
     <script>
         var const100meter = 0.00089982311916;
+        var undefinedLng = "undefined";
+
 
         var gmarkers = [];
         var guidez = [];
-        var curLanguage = "Russian";
+        var curLanguage = "English";
         var currentIndex = 0;
         var paidBtnClass = "btn btn-primary btn-md";
         var paidBtnClassActive = "btn btn-primary btn-md active";
@@ -45,6 +48,12 @@
                 var country = response.country;
                 if (country == "RU" || country == "IL" || country == "BY" || country == "UA" || country == "KZ") {
                     curLanguage = "Russian";
+                    $("#btnRuId").addClass("active");
+                    $("#btnEnId").removeClass("active");
+                }
+                else {
+                    $("#btnEnId").addClass("active");
+                    $("#btnRuId").removeClass("active");
                 }
             }, "jsonp");
             $("#pano").hide();
@@ -106,7 +115,7 @@
             var startParams = parseStartParams();
             curLanguage = language;
             if (startParams[0] == undefined || startParams[1] == undefined || shown == true) {
-                getAndFillPublishedGuides(curLanguage);
+                getAndFillPublishedGuides(undefinedLng);
             }
             else {
                 if (startParams[1] == "rus") {
@@ -116,7 +125,7 @@
                     curLanguage = "English";
                 }
                 shown = true;
-                searchAndFillPublishedGuides(startParams[0], curLanguage);
+                searchAndFillPublishedGuides(startParams[0], undefinedLng);
             }
 
             $.getJSON(getServiceUrl() + "getLables?language=" + curLanguage, function (data) {
@@ -157,7 +166,7 @@
 
         function getAndFillPaidGuides() {
             $(document).ready(function () {
-                $.getJSON(getServiceUrl() + "getPaidGuides?language=" + curLanguage, function (data) {
+                $.getJSON(getServiceUrl() + "getPaidGuides?language=" + undefinedLng, function (data) {
                     fillGuidez(data);
                     currentIndex = 0;
                     setActiveMarker($("#guideSelectionId").find("option:selected").index(), true);
@@ -184,10 +193,14 @@
             for (var i = 0; i < len; i++) {
                 resultList += "<option value=" + i + ">" + data[i].guideName + ", " + data[i].country + "</option>";
                 var center = new google.maps.LatLng(Number(data[i].latitude), Number(data[i].longitude));
+                var iconLang = "img/guideEn.png";
+                if (data[i].language == "ru") {
+                    iconLang = "img/guideRu.png";
+                }
                 (function () {
                     var marker = new google.maps.Marker({
                         position: center,
-                        icon: "img/guide.png"
+                        icon: iconLang
                     });
                     marker.setMap(map);
                     gmarkers.push(marker);
@@ -217,9 +230,19 @@
                     $("#buyTheGuideId").attr("class", "btn btn-success btn-block btn-lg");
                     $("#paidLinkId").attr("href", paid);
                 }
-                gmarkers[currentIndex].setIcon("img/guide.png");
+                var iconLang = "img/guideEn.png";
+                if (guidez[currentIndex].language == "ru") {
+                    iconLang = "img/guideRu.png";
+                }
+                gmarkers[currentIndex].setIcon(iconLang);
+
                 currentIndex = newIndex;
-                gmarkers[currentIndex].setIcon("img/activeGuide.png");
+                var iconActiveLang = "img/activeGuideEn.png";
+                if (guidez[currentIndex].language == "ru") {
+                    iconActiveLang = "img/activeGuideRu.png";
+                }
+                gmarkers[currentIndex].setIcon(iconActiveLang);
+
                 if (center == true) {
                     map.panTo(gmarkers[currentIndex].getPosition());
                 }
@@ -310,6 +333,10 @@
             return (dist);
         }
 
+        function isCurrentLanguage(shortLanguage) {
+            return (shortLanguage == "ru" && curLanguage == "Russian") || (shortLanguage == "en" && curLanguage == "English");
+        }
+
         function locateToNearestGuide() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function (position) {
@@ -317,12 +344,14 @@
                     var index;
                     var distance = Number.MAX_VALUE;
                     for (var i = 0; i < gmarkers.length; i++) {
-                        var mLat = gmarkers[i].getPosition().lat();
-                        var mLng = gmarkers[i].getPosition().lng();
-                        var d = countDistance(mLat, mLng, curPos.lat(), curPos.lng(), 'K');
-                        if (d < distance) {
-                            index = i;
-                            distance = d;
+                        if (isCurrentLanguage(guidez[i].language)) {
+                            var mLat = gmarkers[i].getPosition().lat();
+                            var mLng = gmarkers[i].getPosition().lng();
+                            var d = countDistance(mLat, mLng, curPos.lat(), curPos.lng(), 'K');
+                            if (d < distance) {
+                                index = i;
+                                distance = d;
+                            }
                         }
                     }
                     if (index != undefined) {
@@ -368,7 +397,6 @@
                 $("#enterGuideNameId").val("");
                 $("#btnEnId").addClass("active");
                 $("#btnRuId").removeClass("active");
-                ;
                 $("#paidId").attr("class", paidBtnClass);
                 fillData("English");
             });
@@ -385,7 +413,7 @@
             });
 
             $("#searchId").click(function () {
-                searchAndFillPublishedGuides($("#enterGuideNameId").val(), curLanguage);
+                searchAndFillPublishedGuides($("#enterGuideNameId").val(), undefinedLng);
             });
             $("#locateId").click(function () {
                 locateToNearestGuide();
@@ -402,7 +430,7 @@
             });
             $("#enterGuideNameId").keypress(function (e) {
                 if (e.which == 13) {
-                    searchAndFillPublishedGuides($("#enterGuideNameId").val(), curLanguage);
+                    searchAndFillPublishedGuides($("#enterGuideNameId").val(), undefinedLng);
                 }
             });
             $("#liMapId").click(function (e) {
@@ -439,6 +467,7 @@
                 window.open('https://plus.google.com/u/1/112078580883680850683/posts', '_blank');
             });
             $("#directionId").click(function () {
+                $("#directionId").removeClass("active");
                 window.open('https://maps.google.com?saddr=Current+Location&daddr=' +
                         guidez[currentIndex].latitude + ',' + guidez[currentIndex].longitude, '_blank');
             });
@@ -503,13 +532,13 @@
     <div class="panel panel-default">
         <div class="panel-heading" style="background-color: #AAD7EB">
             <div class="row">
-                <div class="col-lg-10">
+                <div class="col-lg-8">
                     <img src="img/logo1.gif">
                 </div>
-                <div class="col-lg-2" style="text-align: right">
+                <div class="col-lg-4" style="text-align: right">
                     <div class="panel-body">
-                        <button type="button" id="btnEnId" class="btn btn-default btn-md">EN</button>
-                        <button type="button" id="btnRuId" class="btn btn-default btn-md">RU</button>
+                        <button type="button" id="btnEnId" class="btn btn-default btn-md">English</button>
+                        <button type="button" id="btnRuId" class="btn btn-default btn-md">Русский</button>
                     </div>
                 </div>
             </div>

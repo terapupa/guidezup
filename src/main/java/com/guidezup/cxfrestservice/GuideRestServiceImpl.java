@@ -251,6 +251,7 @@ public class GuideRestServiceImpl
                 guide.setLanguage(l);
                 guide.setLanguageView(language);
                 guide.setBuyLink(buyLink);
+                guide.setPublished(true);
                 long guideId = guideDao.addGuide(guide);
                 String fileName = "U3G" + guideId + "_guide.mp3";
                 fileUtil.createGuideFile(audioFile, fileName);
