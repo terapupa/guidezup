@@ -29,8 +29,6 @@
 
     <script>
         var const100meter = 0.00089982311916;
-        var undefinedLng = "undefined";
-
 
         var gmarkers = [];
         var guidez = [];
@@ -115,7 +113,7 @@
             var startParams = parseStartParams();
             curLanguage = language;
             if (startParams[0] == undefined || startParams[1] == undefined || shown == true) {
-                getAndFillPublishedGuides(undefinedLng);
+                getAndFillPublishedGuides(curLanguage);
             }
             else {
                 if (startParams[1] == "rus") {
@@ -125,7 +123,7 @@
                     curLanguage = "English";
                 }
                 shown = true;
-                searchAndFillPublishedGuides(startParams[0], undefinedLng);
+                searchAndFillPublishedGuides(startParams[0], curLanguage);
             }
 
             $.getJSON(getServiceUrl() + "getLables?language=" + curLanguage, function (data) {
@@ -166,7 +164,7 @@
 
         function getAndFillPaidGuides() {
             $(document).ready(function () {
-                $.getJSON(getServiceUrl() + "getPaidGuides?language=" + undefinedLng, function (data) {
+                $.getJSON(getServiceUrl() + "getPaidGuides?language=" + curLanguage, function (data) {
                     fillGuidez(data);
                     currentIndex = 0;
                     setActiveMarker($("#guideSelectionId").find("option:selected").index(), true);
@@ -413,7 +411,7 @@
             });
 
             $("#searchId").click(function () {
-                searchAndFillPublishedGuides($("#enterGuideNameId").val(), undefinedLng);
+                searchAndFillPublishedGuides($("#enterGuideNameId").val(), curLanguage);
             });
             $("#locateId").click(function () {
                 locateToNearestGuide();
@@ -430,7 +428,7 @@
             });
             $("#enterGuideNameId").keypress(function (e) {
                 if (e.which == 13) {
-                    searchAndFillPublishedGuides($("#enterGuideNameId").val(), undefinedLng);
+                    searchAndFillPublishedGuides($("#enterGuideNameId").val(), curLanguage);
                 }
             });
             $("#liMapId").click(function (e) {
