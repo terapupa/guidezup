@@ -5,19 +5,18 @@
     <meta charset="UTF-8">
     <link rel="shortcut icon" type="image/x-icon" href="img/favicon.ico"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css"
-          href="silviomoreto-bootstrap-select-a8ed49e/dist/css/bootstrap-select.css">
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="font-awesome-4.4.0/css/font-awesome.min.css">
     <link rel="stylesheet" type="text/css" href="css/bootstrap-social.css">
     <link rel="stylesheet" type="text/css" href="css/local.css"/>
     <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
-    <script src="silviomoreto-bootstrap-select-a8ed49e/js/bootstrap-select.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAQuDglnklQo2fARuY8FHeu5PDdypvh0is&v=3.exp&signed_in=true"></script>
+    <!--<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAQuDglnklQo2fARuY8FHeu5PDdypvh0is&v=3.exp&signed_in=true&callback=initialize" async defer></script>-->
     <script type="text/javascript" src="http://www.panoramio.com/wapi/wapi.js?v=1"></script>
 
-    <title>GuidezUp! Walk Watch Listen</title>
+    <title>GuidezUp! Walk Watch Listen - Free audio guides. Бесплатные туристические аудиогиды (аудиогайды). Бесплатные
+        аудиогиды. audio, guide, путешествия, путеводитель, travel, podcast, mobile, journey, аудиогид</title>
     <META http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <META name="Description"
           content="Free multi-language travelling audio guides collection. audio, guide, путешествия, путеводитель,
@@ -33,7 +32,7 @@
 
         var gmarkers = [];
         var guidez = [];
-        var curLanguage = "Russian";
+        var curLanguage = "English";
         var currentIndex = 0;
         var paidBtnClass = "btn btn-primary btn-md";
         var paidBtnClassActive = "btn btn-primary btn-md active";
@@ -47,6 +46,12 @@
                 var country = response.country;
                 if (country == "RU" || country == "IL" || country == "BY" || country == "UA" || country == "KZ") {
                     curLanguage = "Russian";
+                    $("#btnRuId").addClass("active");
+                    $("#btnEnId").removeClass("active");
+                }
+                else {
+                    $("#btnEnId").addClass("active");
+                    $("#btnRuId").removeClass("active");
                 }
             }, "jsonp");
             $("#pano").hide();
@@ -66,13 +71,25 @@
                 center: new google.maps.LatLng(51.508742, -0.120850),
                 zoom: 8,
                 streetViewControl: false,
-                mapTypeId: google.maps.MapTypeId.ROADMAP
+                mapTypeControlOptions: {
+                    mapTypeIds: [
+                        google.maps.MapTypeId.ROADMAP,
+                        google.maps.MapTypeId.SATELLITE
+                    ],
+                    position: google.maps.ControlPosition.BOTTOM_LEFT
+                }
             };
             map = new google.maps.Map(document.getElementById("googleMap"), mapProp);
+
+
+            var widgetDiv = document.getElementById("direction-widget");
+            map.controls[google.maps.ControlPosition.TOP_LEFT].push(widgetDiv);
+
+
             $(document).ready(function () {
-//                $.get(getServiceUrl() + "init", function () {
-                    fillData(curLanguage);
-//                }, "jsonp");
+                $.get(getServiceUrl() + "init", function () {
+                fillData(curLanguage);
+                }, "jsonp");
             });
         }
         google.maps.event.addDomListener(window, 'load', initialize);
@@ -116,6 +133,7 @@
                 $("#searchId").html("<span class=\"glyphicon glyphicon-search\"></span> " + data.searchLbl);
                 $("#locateId").html("<span class=\"glyphicon glyphicon-map-marker\"></span> " + data.locateLbl);
                 $("#paidId").html("<span class=\"glyphicon glyphicon-credit-card\"></span> " + data.paidLbl);
+                $("#directionId").html("<span class=\"glyphicon glyphicon-road\"></span> " + data.directionsLbl);
 
                 $("#buyTheGuideId").html("<span class=\"glyphicon glyphicon-credit-card\"></span> " + data.buyTheGuideLbl);
                 $("#selectTheGuideId").text(data.selectTheGuideLbl);
@@ -165,36 +183,33 @@
             return 0;
         }
 
-        /*
-         Fill guide list and put guidez on the map
-         */
-
-        var resultList;
-
         function fillGuidez(data) {
             removeMarkers();
             gmarkers = [];
             var len = data.length;
-            resultList = '';
+            var resultList = '';
             for (var i = 0; i < len; i++) {
                 resultList += "<option value=" + i + ">" + data[i].guideName + ", " + data[i].country + "</option>";
                 var center = new google.maps.LatLng(Number(data[i].latitude), Number(data[i].longitude));
+                var iconLang = "img/guideEn.png";
+                if (data[i].language == "ru") {
+                    iconLang = "img/guideRu.png";
+                }
                 (function () {
                     var marker = new google.maps.Marker({
                         position: center,
-                        icon: "img/guide.png"
+                        icon: iconLang
                     });
                     marker.setMap(map);
                     gmarkers.push(marker);
                     google.maps.event.addListener(marker, 'click', function () {
                         var selected = getMarkerIndex(marker.getPosition());
-                        $('#guideSelectionId').val(selected).selectpicker('refresh');
+                        $('#guideSelectionId').val(selected);
                         setActiveMarker(selected, true);
                     });
                 })();
             }
-            $("#guideSelectionId").html(resultList).selectpicker('refresh').val(0);
-//            $("#guideSelectionId").val(0);
+            $("#guideSelectionId").html(resultList).val(0);
             guidez = data;
             enableDisablePlayer(guidez.length > 0);
         }
@@ -212,25 +227,33 @@
                 else {
                     $("#buyTheGuideId").attr("class", "btn btn-success btn-block btn-lg");
                     $("#paidLinkId").attr("href", paid);
-
                 }
-                gmarkers[currentIndex].setIcon("img/guide.png");
+                var iconLang = "img/guideEn.png";
+                if (guidez[currentIndex].language == "ru") {
+                    iconLang = "img/guideRu.png";
+                }
+                gmarkers[currentIndex].setIcon(iconLang);
+
                 currentIndex = newIndex;
-                gmarkers[currentIndex].setIcon("img/activeGuide.png");
+                var iconActiveLang = "img/activeGuideEn.png";
+                if (guidez[currentIndex].language == "ru") {
+                    iconActiveLang = "img/activeGuideRu.png";
+                }
+                gmarkers[currentIndex].setIcon(iconActiveLang);
+
                 if (center == true) {
                     map.panTo(gmarkers[currentIndex].getPosition());
                 }
-                loadAudioFile()
+                loadAudioFile();
                 drawStreetView();
             }
         }
 
-        function loadAudioFile()
-        {
-            if (playerStopped)
-            {
+        function loadAudioFile() {
+            if (playerStopped) {
                 var audio = $("#player")[0];
                 if (guidez.length) {
+                    var audioOld = $("#playSrc").attr("src");
                     $.getJSON(getServiceUrl() + "getFileToPlay?name=" + guidez[currentIndex].audioFile, function (data) {
                         $("#playSrc").attr("src", getAudioUrl() + data.fileName);
                         audio.load();
@@ -308,6 +331,10 @@
             return (dist);
         }
 
+        function isCurrentLanguage(shortLanguage) {
+            return (shortLanguage == "ru" && curLanguage == "Russian") || (shortLanguage == "en" && curLanguage == "English");
+        }
+
         function locateToNearestGuide() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function (position) {
@@ -315,17 +342,18 @@
                     var index;
                     var distance = Number.MAX_VALUE;
                     for (var i = 0; i < gmarkers.length; i++) {
-                        var mLat = gmarkers[i].getPosition().lat();
-                        var mLng = gmarkers[i].getPosition().lng();
-                        var d = countDistance(mLat, mLng, curPos.lat(), curPos.lng(), 'K');
-                        if (d < distance) {
-                            index = i;
-                            distance = d;
+                        if (isCurrentLanguage(guidez[i].language)) {
+                            var mLat = gmarkers[i].getPosition().lat();
+                            var mLng = gmarkers[i].getPosition().lng();
+                            var d = countDistance(mLat, mLng, curPos.lat(), curPos.lng(), 'K');
+                            if (d < distance) {
+                                index = i;
+                                distance = d;
+                            }
                         }
                     }
                     if (index != undefined) {
-                        $("#guideSelectionId").val(index).selectpicker('refresh');
-//                        $("#guideSelectionId").selectpicker('refresh');
+                        $("#guideSelectionId").val(index);
                         setActiveMarker(index, true);
                     }
                 }, function () {
@@ -363,21 +391,10 @@
 
         $(document).ready(function () {
             var audioElement = $("#player")[0];
-            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent)) {
-                $("#guideSelectionId").selectpicker('mobile');
-            }
-            $('.modal')
-                    .on('shown', function () {
-                        $('body').css({overflow: 'hidden'});
-                    })
-                    .on('hidden', function () {
-                        $('body').css({overflow: ''});
-                    });
-
             $("#btnEnId").click(function () {
                 $("#enterGuideNameId").val("");
                 $("#btnEnId").addClass("active");
-                $("#btnRuId").removeClass("active");;
+                $("#btnRuId").removeClass("active");
                 $("#paidId").attr("class", paidBtnClass);
                 fillData("English");
             });
@@ -391,9 +408,8 @@
             $("#guideSelectionId").on('change', function () {
                 var index = $("#guideSelectionId").find("option:selected").index();
                 setActiveMarker(index, true);
-                $("#guideSelectionId").empty().html(resultList).selectpicker('refresh').val(index).selectpicker('refresh');
-
             });
+
             $("#searchId").click(function () {
                 searchAndFillPublishedGuides($("#enterGuideNameId").val(), curLanguage);
             });
@@ -448,16 +464,19 @@
             $("#googleId").click(function () {
                 window.open('https://plus.google.com/u/1/112078580883680850683/posts', '_blank');
             });
+            $("#directionId").click(function () {
+                $("#directionId").removeClass("active");
+                window.open('https://maps.google.com?saddr=Current+Location&daddr=' +
+                        guidez[currentIndex].latitude + ',' + guidez[currentIndex].longitude, '_blank');
+            });
             $(".button-pause").on("click", function () {
                 $(".button-pause").blur().addClass("active");
-//                $(".button-pause").addClass("active");
                 $(".button-play").removeClass("active");
                 audioElement.pause();
             });
             $(".button-play").on("click", function () {
                 playerStopped = false;
                 $(".button-play").blur().addClass("active");
-//                $(".button-play").addClass("active");
                 $(".button-pause").removeClass("active");
                 audioElement.play();
             });
@@ -473,33 +492,28 @@
             });
             $(".button-skip-forward").on("click", function () {
                 $(".button-skip-forward").blur();
-                if (!playerStopped)
-                {
+                if (!playerStopped) {
                     audioElement.currentTime += 5;
                 }
             });
 
             $(".button-skip-backward").on("click", function () {
                 $(".button-skip-backward").blur();
-                if (!playerStopped)
-                {
+                if (!playerStopped) {
                     audioElement.currentTime -= 5;
                 }
             });
         });
 
-        function enableDisablePlayer(enable)
-        {
-            if (enable)
-            {
+        function enableDisablePlayer(enable) {
+            if (enable) {
                 $(".button-stop").removeClass("disabled");
                 $(".button-play").removeClass("disabled");
                 $(".button-pause").removeClass("disabled");
                 $(".button-skip-backward").removeClass("disabled");
                 $(".button-skip-forward").removeClass("disabled");
             }
-            else
-            {
+            else {
                 $(".button-stop").addClass("disabled");
                 $(".button-play").addClass("disabled");
                 $(".button-pause").addClass("disabled");
@@ -516,13 +530,13 @@
     <div class="panel panel-default">
         <div class="panel-heading" style="background-color: #AAD7EB">
             <div class="row">
-                <div class="col-lg-10">
+                <div class="col-lg-8">
                     <img src="img/logo1.gif">
                 </div>
-                <div class="col-lg-2" style="text-align: right">
+                <div class="col-lg-4" style="text-align: right">
                     <div class="panel-body">
-                        <button type="button" id="btnEnId" class="btn btn-default btn-md">EN</button>
-                        <button type="button" id="btnRuId" class="btn btn-default btn-md">RU</button>
+                        <button type="button" id="btnEnId" class="btn btn-default btn-md">English</button>
+                        <button type="button" id="btnRuId" class="btn btn-default btn-md">Русский</button>
                     </div>
                 </div>
             </div>
@@ -536,7 +550,6 @@
                             <span class="glyphicon glyphicon-search"></span>
                         </button>
                     </span>
-
                 </div>
             </div>
 
@@ -553,7 +566,7 @@
             <form role="form">
                 <div class="form-group">
                     <label id="selectTheGuideId" for="guideSelectionId">Select the guide:</label>
-                    <select name="selValue" class="form-control input-lg selectpicker" data-style="btn-default btn-lg"
+                    <select name="selValue" class="form-control input-lg" data-style="btn-default btn-lg"
                             id="guideSelectionId"></select>
                 </div>
             </form>
@@ -586,6 +599,7 @@
                 <button type="button" class="btn btn-default btn-lg button-skip-forward">
                     <span class="glyphicon glyphicon-fast-forward"></span>
                 </button>
+
             </div>
 
         </div>
@@ -597,6 +611,11 @@
             </ul>
             <div id="googleMap" style="height:37em;"></div>
             <div id="pano" style="height:37em;"></div>
+            <div id="direction-widget">
+                <button type="button" id="directionId" class="btn btn-primary btn-md">
+                    <span class="glyphicon glyphicon-road"></span> Directions
+                </button>
+            </div>
 
         </div>
         <div class="panel-footer" style="text-align: center">
@@ -623,4 +642,21 @@
 
 </body>
 <script type="text/javascript" src="https://sellfy.com/js/api_buttons.js"></script>
+<script>
+    (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r;
+        i[r] = i[r] || function () {
+                    (i[r].q = i[r].q || []).push(arguments)
+                }, i[r].l = 1 * new Date();
+        a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0];
+        a.async = 1;
+        a.src = g;
+        m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+    ga('create', 'UA-67045406-1', 'auto');
+    ga('send', 'pageview');
+</script>
+
 </html>

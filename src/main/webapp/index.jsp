@@ -9,10 +9,9 @@
     <link rel="stylesheet" type="text/css" href="font-awesome-4.4.0/css/font-awesome.min.css">
     <link rel="stylesheet" type="text/css" href="css/bootstrap-social.css">
     <link rel="stylesheet" type="text/css" href="css/local.css"/>
-    <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script src="js/jquery-1.11.3.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAQuDglnklQo2fARuY8FHeu5PDdypvh0is&v=3.exp&signed_in=true"></script>
-    <!--<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAQuDglnklQo2fARuY8FHeu5PDdypvh0is&v=3.exp&signed_in=true&callback=initialize" async defer></script>-->
     <script type="text/javascript" src="http://www.panoramio.com/wapi/wapi.js?v=1"></script>
 
     <title>GuidezUp! Walk Watch Listen - Free audio guides. Бесплатные туристические аудиогиды (аудиогайды). Бесплатные
@@ -32,6 +31,7 @@
 
         var gmarkers = [];
         var guidez = [];
+        var autocomplete = [];
         var curLanguage = "English";
         var currentIndex = 0;
         var paidBtnClass = "btn btn-primary btn-md";
@@ -140,14 +140,65 @@
             });
         }
 
+        function initAutoComplete(data) {
+            if (autocomplete.length == 0) {
+                for (var i = 0; i < data.length; i++) {
+                    autocomplete.push(data[i].guideName + ", " + data[i].country);
+                }
+            }
+        }
+
         function getAndFillPublishedGuides(language) {
             $(document).ready(function () {
                 $.getJSON(getServiceUrl() + "getPublishGuides?language=" + language, function (data) {
                     fillGuidez(data);
                     currentIndex = 0;
+                    initAutoComplete(data);
                     setActiveMarker($("#guideSelectionId").find("option:selected").index(), true);
                 });
             });
+        }
+
+        function addToList(array, dataItem) {
+            var found = true;
+            for (var j = 0; j < array.length; j++) {
+                var regex = new RegExp(array[j], "i");
+                if (dataItem.search(regex) < 0) {
+                    found = false;
+                }
+            }
+            if (found) {
+                return "<li><a href=\"#\">" + dataItem + "</a></li>";
+            }
+            return "";
+        }
+
+        function showAutoComplete(pattern, data, dropdownMenuId) {
+            if (pattern.length < 1) {
+                $(dropdownMenuId).hide();
+            }
+            else {
+                var array = pattern.split(" ");
+                var resultList = '';
+                var maxSizeIndex = 0;
+                for (var i = 0; i < data.length; i++) {
+                    var add = addToList(array, data[i]);
+                    if (add.length > 0) {
+                        resultList += add;
+                        maxSizeIndex++;
+                    }
+                    if (maxSizeIndex >= 4) {
+                        break;
+                    }
+                }
+                if (resultList.length > 0) {
+                    $(dropdownMenuId).html(resultList).val(0);
+                    $(dropdownMenuId).show();
+                }
+                else {
+                    $(dropdownMenuId).hide();
+                }
+            }
         }
 
         function searchAndFillPublishedGuides(pattern, language) {
@@ -426,11 +477,15 @@
                     fillData(curLanguage);
                 }
             });
-            $("#enterGuideNameId").keypress(function (e) {
-                if (e.which == 13) {
-                    searchAndFillPublishedGuides($("#enterGuideNameId").val(), curLanguage);
-                }
-            });
+            $("#enterGuideNameId")
+                    .keypress(function (e) {
+                        if (e.which == 13) {
+                            searchAndFillPublishedGuides($("#enterGuideNameId").val(), curLanguage);
+                        }
+                    })
+                    .keyup(function () {
+                        showAutoComplete($(this).val().trim(), autocomplete, "#dropdownMenuId");
+                    });
             $("#liMapId").click(function (e) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
@@ -438,7 +493,7 @@
                 $("#liStreetViewId").removeClass("active");
                 $("#googleMap").show();
                 $("#pano").hide();
-                google.maps.event.trigger(map, 'resize')
+                google.maps.event.trigger(map, 'resize');
                 map.panTo(gmarkers[currentIndex].getPosition());
             });
             $("#liStreetViewId").click(function (e) {
@@ -503,6 +558,14 @@
                     audioElement.currentTime -= 5;
                 }
             });
+            $("#dropdownMenuId").on('click', 'li', function () {
+                $("#enterGuideNameId").val($(this).children().text());
+                $("#dropdownMenuId").hide();
+            });
+            $('body').click(function () {
+                $("#dropdownMenuId").hide();
+            });
+
         });
 
         function enableDisablePlayer(enable) {
@@ -542,9 +605,10 @@
             </div>
 
             <div class="form-group">
-                <div class="input-group">
+                <div class="input-group dropdown">
                     <input type="text" class="form-control input-lg" id="enterGuideNameId"
                            placeholder="Enter guide name...">
+                    <ul class="dropdown-menu" id="dropdownMenuId"></ul>
                     <span class="input-group-btn">
                         <button type="button" id="searchId" class="btn btn-primary btn-lg">
                             <span class="glyphicon glyphicon-search"></span>
