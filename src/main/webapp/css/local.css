@@ -4,4 +4,13 @@
     margin: 15px;
 }
 
+a.search-option {
+    text-decoration: none;
+}
+
+.search-option:focus, .search-option:hover {
+    background: #999;
+    color: #FFF;
+}
+
 

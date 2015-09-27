@@ -168,7 +168,7 @@
                 }
             }
             if (found) {
-                return "<li><a href=\"#\">" + dataItem + "</a></li>";
+                return "<li><a class=\"search-option\"  href=\"#\">" + dataItem + "</a></li>";
             }
             return "";
         }
@@ -183,7 +183,8 @@
                 var maxSizeIndex = 0;
                 for (var i = 0; i < data.length; i++) {
                     var add = addToList(array, data[i]);
-                    if (add.length > 0) {
+                    var regex = new RegExp(add, "i");
+                    if (add.length > 0 && resultList.search(regex) < 0) {
                         resultList += add;
                         maxSizeIndex++;
                     }
@@ -477,15 +478,18 @@
                     fillData(curLanguage);
                 }
             });
-            $("#enterGuideNameId")
-                    .keypress(function (e) {
-                        if (e.which == 13) {
-                            searchAndFillPublishedGuides($("#enterGuideNameId").val(), curLanguage);
-                        }
-                    })
-                    .keyup(function () {
-                        showAutoComplete($(this).val().trim(), autocomplete, "#dropdownMenuId");
-                    });
+            $("#enterGuideNameId").keyup(function (e) {
+                if (e.which == 13) {
+                    searchAndFillPublishedGuides($("#enterGuideNameId").val(), curLanguage);
+                    $("#dropdownMenuId").hide();
+                }
+                else if (e.which == 40) {
+                    $(".search-option:first").focus();
+                }
+                else {
+                    showAutoComplete($(this).val().trim(), autocomplete, "#dropdownMenuId");
+                }
+            });
             $("#liMapId").click(function (e) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
@@ -551,19 +555,31 @@
                     audioElement.currentTime += 5;
                 }
             });
-
             $(".button-skip-backward").on("click", function () {
                 $(".button-skip-backward").blur();
                 if (!playerStopped) {
                     audioElement.currentTime -= 5;
                 }
             });
-            $("#dropdownMenuId").on('click', 'li', function () {
-                $("#enterGuideNameId").val($(this).children().text());
-                $("#dropdownMenuId").hide();
-            });
-            $('body').click(function () {
-                $("#dropdownMenuId").hide();
+            $("#dropdownMenuId")
+                    .on('click', 'li', function () {
+                        $("#enterGuideNameId").val($(this).children().text()).focus();
+                        $("#dropdownMenuId").hide();
+                    })
+                    .on('keydown', 'li', function (e) {
+                        if (e.which == 40) { // down
+                            $(this).next().find(".search-option").focus();
+                        }
+                        else if (e.which == 38) { // up
+                            $(this).prev().find(".search-option").focus();
+                        }
+                    });
+            $('body').click(function (e) {
+                if (e.originalEvent != undefined)
+                {
+                    console.log("originalEvent = " + e.originalEvent);
+                    $("#dropdownMenuId").hide();
+                }
             });
 
         });
@@ -606,9 +622,9 @@
 
             <div class="form-group">
                 <div class="input-group dropdown">
-                    <input type="text" class="form-control input-lg" id="enterGuideNameId"
-                           placeholder="Enter guide name...">
-                    <ul class="dropdown-menu" id="dropdownMenuId"></ul>
+                    <input type="text" class="form-control input-lg dropdown-toggle" id="enterGuideNameId"
+                           placeholder="Enter guide name..." aria-haspopup="true" aria-expanded="false">
+                    <ul class="dropdown-menu" role="menu" id="dropdownMenuId"></ul>
                     <span class="input-group-btn">
                         <button type="button" id="searchId" class="btn btn-primary btn-lg">
                             <span class="glyphicon glyphicon-search"></span>
